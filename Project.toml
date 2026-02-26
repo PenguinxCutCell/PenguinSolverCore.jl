@@ -5,11 +5,15 @@ version = "0.1.0"
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
+[weakdeps]
+SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+
 [extensions]
 PenguinSolverCoreSciMLBaseExt = "SciMLBase"
 
 [compat]
 LinearAlgebra = "1.11.0"
+SciMLBase = "1, 2"
 julia = "1"
 
 [extras]

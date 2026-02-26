@@ -49,5 +49,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-julia-compiled-${{ matrix.julia }}-
 
-      - name: Install dependencies (including VofiJul), instantiate, and run tests
+      - name: Instantiate and run tests
         run: julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
