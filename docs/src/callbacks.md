@@ -21,6 +21,15 @@ Allowed return symbols:
 
 Use `UpdateManager` plus `add_update!` to register events.
 
+### Recommended conventions
+
+For consistency across Penguin physics packages:
+
+- Box Dirichlet value updates (including time-varying `Ref` payloads): `:rhs_only`
+- Interface RHS updates such as Robin/jump `g(x,t)`: `:rhs_only`
+- Interface coefficient updates that change constraint matrices (`a`, `b`, `b1`, `b2`, `α1`, `α2`): `:matrix`
+- Geometry/moment/operator topology changes: `:geometry`
+
 ## Schedules
 
 - `AtTimes(ts)` : fire at specific times (internally normalized/sorted)

@@ -12,6 +12,11 @@ Core solver plumbing shared by Penguin physics packages.
 - Optional SciML bridge (package extension) for `ODEFunction`, `ODEProblem`, and callbacks
 - Support for mass matrices in SciML problems
 
+Recommended updater convention:
+- use `:rhs_only` for boundary/interface value changes (for example time-varying Dirichlet or Robin `g`)
+- use `:matrix` when coefficients/factorizations change
+- use `:geometry` when operator topology/geometry changes
+
 ## Installation
 
 After cloning the repo,
