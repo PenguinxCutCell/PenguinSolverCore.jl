@@ -12,8 +12,6 @@ makedocs(
     ),
     pages = [
         "Home" => "index.md",
-        "Callbacks and Scheduling" => "callbacks.md",
-        "API Reference" => "reference.md",
     ],
     pagesonly = true,
     warnonly = true,
