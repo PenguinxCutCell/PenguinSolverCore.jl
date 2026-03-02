@@ -12,6 +12,8 @@ makedocs(
     ),
     pages = [
         "Home" => "index.md",
+        "API Reference" => "reference.md",
+        "Recent Updates" => "updates.md",
     ],
     pagesonly = true,
     warnonly = true,
