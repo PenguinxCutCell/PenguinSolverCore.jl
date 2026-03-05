@@ -1,6 +1,8 @@
 # PenguinSolverCore.jl
 
 [![In development documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://PenguinxCutCell.github.io/PenguinSolverCore.jl/dev)
+![CI](https://github.com/PenguinxCutCell/PenguinSolverCore.jl/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/PenguinxCutCell/PenguinSolverCore.jl/graph/badge.svg?token=Q50hXtjAKk)](https://codecov.io/gh/PenguinxCutCell/PenguinSolverCore.jl)
 
 `PenguinSolverCore.jl` provides reusable linear-system assembly and solve plumbing for PenguinxCutCell packages.
 
