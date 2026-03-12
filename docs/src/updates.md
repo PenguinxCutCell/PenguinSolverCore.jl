@@ -10,4 +10,8 @@
   - matrix assembly updates when `dt` changes,
   - RHS-only updates every step,
   - stored `last_dt` for reuse decisions.
-- Removed prior callback/schedule-based scaffolding and corresponding docs/tests.
+- Added a generic, physics-agnostic block coupling layer:
+  - `OneWayCoupling` for passive sequential coupling.
+  - `TwoWayCoupling` for Picard outer iterations with optional under-relaxation.
+  - Named-field transfer via `CouplingMap` and extension hooks.
+- Added toy-only tests and docs examples for coupling orchestration.

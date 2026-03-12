@@ -5,6 +5,11 @@ using LinearSolve
 using SparseArrays
 
 export LinearSystem, assemble!, solve!, theta_step!, assemble_matrix!, assemble_rhs!
+export CoupledBlock, CoupledProblem, CouplingMap
+export OneWayCoupling, TwoWayCoupling
+export solve_coupled!, step_coupled!
+export get_coupling_field, set_coupling_field!
+export advance_steady!, advance_unsteady!, coupling_residual
 
 mutable struct LinearSystem{T}
     A::SparseMatrixCSC{T,Int}
@@ -94,5 +99,13 @@ function theta_step!(sys::LinearSystem, model, uⁿ, t, dt, θ;
     sys.last_dt = dt
     return solve!(sys; method=method, reuse_factorization=reuse_factorization, kwargs...)
 end
+
+include("coupling/types.jl")
+include("coupling/interfaces.jl")
+include("coupling/transfer.jl")
+include("coupling/relaxation.jl")
+include("coupling/history.jl")
+include("coupling/one_way.jl")
+include("coupling/two_way.jl")
 
 end

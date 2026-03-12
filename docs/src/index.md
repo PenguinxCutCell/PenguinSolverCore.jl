@@ -6,44 +6,86 @@ CurrentModule = PenguinSolverCore
 
 ## Overview
 
-`PenguinSolverCore.jl` currently focuses on linear-system assembly and solve infrastructure:
+`PenguinSolverCore.jl` provides reusable solver-core infrastructure with two layers:
 
-- `LinearSystem` as a mutable state container (`A`, `b`, `x`, solve cache)
-- Assembly hooks for custom models (`assemble!`, `assemble_matrix!`, `assemble_rhs!`)
-- Solve methods backed by direct LU or `LinearSolve.jl`
-- `theta_step!` helper for time-stepping skeletons with `dt`-aware matrix assembly
+- Linear-system plumbing: `LinearSystem`, assembly hooks, `solve!`, `theta_step!`
+- Generic block coupling orchestration:
+  - `OneWayCoupling` for passive sequential field transfer
+  - `TwoWayCoupling` for outer Picard fixed-point iterations
 
-## Recent Updates (March 2026)
+The package is intentionally physics-agnostic. It does not encode Darcy/Stokes/transport
+model logic. Physics packages remain responsible for their own assembly and block solves,
+and extend SolverCore via coupling hooks.
 
-- Package internals were streamlined to a lean linear-solver core.
-- `solve!` now supports `method = :direct` or `method = :linearsolve`.
-- `theta_step!` now tracks `last_dt` and only rebuilds matrix terms when needed.
-- Documentation was rebuilt around the current API surface.
+## Generic Block Coupling
 
-## Quick Example
+Coupled orchestration is built around:
+
+- `CoupledBlock`: one independently solvable block
+- `CouplingMap`: named-field transfer (`:velocity`, `:temperature`, etc.)
+- `CoupledProblem`: blocks + coupling mode + maps
+
+Extension hooks to overload in physics packages:
+
+- `advance_steady!` / `advance_unsteady!`
+- `get_coupling_field` / `set_coupling_field!`
+- `copy_state`
+- optional `coupling_residual`
+
+### Minimal Toy Example
 
 ```@example
-using SparseArrays
 using PenguinSolverCore
 
-struct ToyModel end
-
-function PenguinSolverCore.assemble_matrix!(sys::LinearSystem, ::ToyModel, t, dt, θ)
-    n = length(sys.b)
-    sys.A = spdiagm(0 => fill(2.0 + dt + θ, n))
-    return sys
+struct ProducerModel end
+mutable struct ProducerState
+    velocity::Float64
 end
 
-function PenguinSolverCore.assemble_rhs!(sys::LinearSystem, ::ToyModel, uⁿ, t, dt, θ)
-    sys.b .= uⁿ .+ t .+ dt .+ θ
-    return sys
+struct FollowerModel
+    gain::Float64
+end
+mutable struct FollowerState
+    velocity::Float64
+    pressure::Float64
 end
 
-sys = LinearSystem(spdiagm(0 => ones(2)), zeros(2))
-x = theta_step!(sys, ToyModel(), [1.0, 3.0], 0.0, 0.1, 0.5)
+PenguinSolverCore.initialize_state(::ProducerModel, init) = ProducerState(0.0)
+PenguinSolverCore.initialize_state(::FollowerModel, init) = FollowerState(0.0, 0.0)
+PenguinSolverCore.copy_state(s::ProducerState) = ProducerState(s.velocity)
+PenguinSolverCore.copy_state(s::FollowerState) = FollowerState(s.velocity, s.pressure)
 
-x
+function PenguinSolverCore.advance_steady!(block::CoupledBlock{M,S,C}; kwargs...) where {M<:ProducerModel,S<:ProducerState,C}
+    block.state.velocity = 2.0
+    return block
+end
+
+function PenguinSolverCore.advance_steady!(block::CoupledBlock{M,S,C}; kwargs...) where {M<:FollowerModel,S<:FollowerState,C}
+    block.state.pressure = block.model.gain * block.state.velocity
+    return block
+end
+
+PenguinSolverCore.get_coupling_field(block::CoupledBlock{M,S,C}, ::Val{:velocity}) where {M<:ProducerModel,S<:ProducerState,C} = block.state.velocity
+function PenguinSolverCore.set_coupling_field!(block::CoupledBlock{M,S,C}, ::Val{:velocity}, data) where {M<:FollowerModel,S<:FollowerState,C}
+    block.state.velocity = data
+    return block
+end
+
+flow = CoupledBlock(:flow, ProducerModel(); init=nothing)
+transport = CoupledBlock(:transport, FollowerModel(3.0); init=nothing)
+
+problem = CoupledProblem(
+    [flow, transport],
+    OneWayCoupling([:flow, :transport]);
+    maps=[CouplingMap(:flow, :transport, :velocity)],
+)
+
+solve_coupled!(problem)
+transport.state.pressure
 ```
+
+`TwoWayCoupling` uses the same hooks, but with an outer fixed-point loop, residual checks,
+and optional under-relaxation.
 
 ## Main Sections
 
